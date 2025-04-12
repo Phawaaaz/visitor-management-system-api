@@ -1,0 +1,615 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Visitor Management System API",
+      "description": "API for managing visitors, admins, bookings, and more with JWT authentication and QR code functionality.",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "http://localhost:5000",
+        "description": "Local development server"
+      }
+    ],
+    "tags": [
+      {
+        "name": "Visitors",
+        "description": "Endpoints related to Visitor operations"
+      },
+      {
+        "name": "Admins",
+        "description": "Endpoints related to Admin operations"
+      },
+      {
+        "name": "Bookings",
+        "description": "Endpoints for creating and managing Bookings"
+      },
+      {
+        "name": "SuperAdmin",
+        "description": "Endpoints for Super Admin to manage Admin approvals"
+      }
+    ],
+    "paths": {
+      "/api/visitors/register": {
+        "post": {
+          "tags": ["Visitors"],
+          "summary": "Register a new Visitor",
+          "operationId": "registerVisitor",
+          "requestBody": {
+            "description": "Visitor registration data",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["name", "email", "phone", "password"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "John Doe"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "john@example.com"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "example": "555-1234"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "password123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Visitor registered successfully"
+            },
+            "400": {
+              "description": "Visitor already exists or validation errors"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+      "/api/visitors/login": {
+        "post": {
+          "tags": ["Visitors"],
+          "summary": "Login as a Visitor",
+          "operationId": "loginVisitor",
+          "requestBody": {
+            "description": "Visitor login credentials",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["email", "password"],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "example": "john@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "password123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Visitor logged in successfully (JWT returned)"
+            },
+            "401": {
+              "description": "Invalid credentials"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+      "/api/visitors/me": {
+        "get": {
+          "tags": ["Visitors"],
+          "summary": "Get current logged-in Visitor",
+          "operationId": "getMeVisitor",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Current visitor profile data"
+            },
+            "401": {
+              "description": "Not authorized"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+  
+      "/api/admins/register": {
+        "post": {
+          "tags": ["Admins"],
+          "summary": "Register a new Admin",
+          "operationId": "registerAdmin",
+          "requestBody": {
+            "description": "Admin registration data",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["name", "email", "password"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "Jane Admin"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "jane.admin@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "password123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Admin registered; pending approval"
+            },
+            "400": {
+              "description": "Admin already exists or validation errors"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+      "/api/admins/login": {
+        "post": {
+          "tags": ["Admins"],
+          "summary": "Login as an Admin",
+          "operationId": "loginAdmin",
+          "requestBody": {
+            "description": "Admin login credentials",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["email", "password"],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "example": "jane.admin@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "password123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Admin logged in successfully (JWT returned)"
+            },
+            "401": {
+              "description": "Invalid credentials or not approved"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+      "/api/admins/visitors": {
+        "get": {
+          "tags": ["Admins"],
+          "summary": "Get all Visitors (Admin-only)",
+          "operationId": "getAllVisitors",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of visitors returned"
+            },
+            "403": {
+              "description": "User role not authorized"
+            },
+            "401": {
+              "description": "Not authorized (no token, invalid token, etc.)"
+            }
+          }
+        }
+      },
+      "/api/admins/check-in": {
+        "post": {
+          "tags": ["Admins"],
+          "summary": "Process check-in via QR code (Admin-only)",
+          "operationId": "processCheckIn",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "description": "Check-in data",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bookingId": {
+                      "type": "string",
+                      "example": "6435f4a51a9c3c9655b666aa"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Booking checked in successfully"
+            },
+            "400": {
+              "description": "Booking already checked in or invalid request"
+            },
+            "404": {
+              "description": "Booking not found"
+            },
+            "401": {
+              "description": "Not authorized"
+            }
+          }
+        }
+      },
+      "/api/admins/check-out": {
+        "post": {
+          "tags": ["Admins"],
+          "summary": "Process check-out via QR code (Admin-only)",
+          "operationId": "processCheckOut",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "description": "Check-out data",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bookingId": {
+                      "type": "string",
+                      "example": "6435f4a51a9c3c9655b666aa"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Booking checked out successfully"
+            },
+            "400": {
+              "description": "Booking is not checked in or invalid request"
+            },
+            "404": {
+              "description": "Booking not found"
+            },
+            "401": {
+              "description": "Not authorized"
+            }
+          }
+        }
+      },
+  
+      "/api/bookings": {
+        "post": {
+          "tags": ["Bookings"],
+          "summary": "Create a new Booking (Visitor-only)",
+          "operationId": "createBooking",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "description": "Booking details",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["purpose", "visitDate", "visitTime"],
+                  "properties": {
+                    "purpose": {
+                      "type": "string",
+                      "example": "Business meeting"
+                    },
+                    "visitDate": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2023-12-01"
+                    },
+                    "visitTime": {
+                      "type": "string",
+                      "example": "10:00"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Booking created successfully (with QR codes)"
+            },
+            "401": {
+              "description": "Not authorized"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        },
+        "get": {
+          "tags": ["Bookings"],
+          "summary": "Get all Bookings for the logged-in Visitor",
+          "operationId": "getMyBookings",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Array of bookings"
+            },
+            "401": {
+              "description": "Not authorized"
+            }
+          }
+        }
+      },
+      "/api/bookings/{id}": {
+        "get": {
+          "tags": ["Bookings"],
+          "summary": "Get a single Booking by ID (Visitor or Admin)",
+          "operationId": "getBooking",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Booking ID",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "example": "6435f4a51a9c3c9655b666aa"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Booking data"
+            },
+            "401": {
+              "description": "Not authorized to view this booking"
+            },
+            "404": {
+              "description": "Booking not found"
+            }
+          }
+        }
+      },
+      "/api/bookings/{id}/cancel": {
+        "put": {
+          "tags": ["Bookings"],
+          "summary": "Cancel a Booking (Visitor-only)",
+          "operationId": "cancelBooking",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Booking ID",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "example": "6435f4a51a9c3c9655b666aa"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Booking canceled successfully"
+            },
+            "400": {
+              "description": "Cannot cancel booking that is already checked in or out"
+            },
+            "401": {
+              "description": "Not authorized to cancel this booking"
+            },
+            "404": {
+              "description": "Booking not found"
+            }
+          }
+        }
+      },
+  
+      "/api/super-admin/pending-admins": {
+        "get": {
+          "tags": ["SuperAdmin"],
+          "summary": "Get all pending Admin registrations (SuperAdmin-only)",
+          "operationId": "getPendingAdmins",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of pending admins"
+            },
+            "403": {
+              "description": "User role not authorized"
+            },
+            "401": {
+              "description": "Not authorized"
+            }
+          }
+        }
+      },
+      "/api/super-admin/admin/{id}": {
+        "put": {
+          "tags": ["SuperAdmin"],
+          "summary": "Approve or reject an Admin (SuperAdmin-only)",
+          "operationId": "updateAdminStatus",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Admin ID",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "example": "6435f4a51a9c3c9655b666bb"
+              }
+            }
+          ],
+          "requestBody": {
+            "description": "Status update (approved or rejected)",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["approved", "rejected"],
+                      "example": "approved"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Admin status updated"
+            },
+            "400": {
+              "description": "Invalid status"
+            },
+            "401": {
+              "description": "Not authorized"
+            },
+            "404": {
+              "description": "Admin not found"
+            }
+          }
+        }
+      },
+      "/api/super-admin/setup": {
+        "post": {
+          "tags": ["SuperAdmin"],
+          "summary": "Create the Super Admin (One-time setup)",
+          "operationId": "setupSuperAdmin",
+          "requestBody": {
+            "description": "Super Admin credentials",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["name", "email", "password"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "Super Admin"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "super.admin@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "superpass123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Super admin created successfully"
+            },
+            "400": {
+              "description": "Super admin already exists"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "BearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    }
+  }
+  
